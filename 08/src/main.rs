@@ -1,5 +1,6 @@
 // #![allow(unused_must_use, dead_code, unused_mut, unused_variables, unused_imports)]
 
+use regex::Regex;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -13,6 +14,22 @@ impl Node {
     fn new(left: String, right: String) -> Self {
         Self { left, right }
     }
+}
+
+fn gcd(a: u64, b: u64) -> u64 {
+    if b == 0 {
+        a
+    } else {
+        gcd(b, a % b)
+    }
+}
+
+fn lcm(numbers: Vec<u64>) -> u64 {
+    let mut lcm: u64 = 1;
+    for number in numbers {
+        lcm = lcm * (number) / gcd(lcm, number);
+    }
+    lcm
 }
 
 fn main() {
@@ -50,4 +67,31 @@ fn main() {
         }
     }
     println!("In part 1, the steps required to reach ZZZ total {}", leaps);
+
+    let keys: Vec<String> = node_map.keys().cloned().collect();
+    let group_of_nodes: Vec<String> = keys.iter()
+        .filter(|string| Regex::new(r"..A").unwrap().is_match(string))
+        .cloned()
+        .collect();
+    let mut shortest_paths: Vec<u64> = Vec::new();
+    for n in group_of_nodes {
+        leaps = 0;
+        let mut node_to_consider = &n;
+        for character in loop_string.chars().cycle() {
+            if Regex::new(r"..Z").unwrap().is_match(&node_to_consider) {
+                break;
+            } else {
+                let next_location_possibilities = node_map.get(node_to_consider).unwrap();
+                node_to_consider = match character {
+                    'R' => &next_location_possibilities.right,
+                    'L' => &next_location_possibilities.left,
+                    _ => panic!(),
+                };
+                leaps += 1;
+            }
+        }
+        shortest_paths.push(leaps as u64);
+    }
+
+    println!("The number of steps it takes before you're only on nodes that end with Z: {}", lcm(shortest_paths));
 }
